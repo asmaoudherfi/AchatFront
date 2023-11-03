@@ -1,23 +1,11 @@
-# Use the official Node.js image as the base image
-FROM node:14
-
-# Set the working directory in the container
+FROM node:14 AS builder
 WORKDIR /app
-
-# Copy the package.json and package-lock.json to the container
 COPY package*.json ./
-
-# Install project dependencies
+RUN npm install -g @angular/cli
 RUN npm install
-
-# Copy the rest of the application source code to the container
 COPY . .
-
-# Build the Angular application
-RUN npm run build
-
-# Expose the port the app runs on
+RUN ng build --prod
+FROM nginx:alpine
+COPY --from=builder /app/dist/* /usr/share/nginx/html/
 EXPOSE 4200
-
-# Define the command to start the Angular app
-CMD ["ng", "serve", "--host", "192.168.33.10", "--port", "4200"]
+CMD ["nginx", "-g", "daemon off;"]
